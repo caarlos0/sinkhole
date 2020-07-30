@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -17,7 +16,6 @@ func main() {
 	if p := os.Getenv("PORT"); p != "" {
 		addr = ":" + p
 	}
-	log.Println("listening on", addr)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -29,13 +27,9 @@ func main() {
 			}
 			time.Sleep(d)
 		}
-		bts, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+
 		defer r.Body.Close()
-		log.Println(r.URL, "body:", string(bts))
+		log.Println(r.URL)
 		fmt.Fprintln(w, "ok")
 	})
 
@@ -52,16 +46,13 @@ func main() {
 			log.Fatalf("listen: %s\n", err)
 		}
 	}()
-	log.Println("server started")
+	log.Println("server started on " + addr)
 
 	<-done
 	log.Println("server stop requested")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer func() {
-		// extra handling here
-		cancel()
-	}()
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("server shutdown failed:%+v", err)
