@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -23,7 +24,13 @@ func main() {
 			}
 			time.Sleep(d)
 		}
+		bts, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+		log.Println(r.URL, "body:", string(bts))
 		fmt.Fprintln(w, "ok")
-		log.Println(r.URL)
 	}))
 }
